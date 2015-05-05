@@ -13,7 +13,7 @@
 void oops(char *, char *);
 bool is_same_file(char *src, char *dest);
 
-main(int ac, char *av[])
+int main(int ac, char *av[])
 {
     int     in_fd, out_fd, n_chars;
     char    buf[BUFFERSIZE];
@@ -45,6 +45,7 @@ main(int ac, char *av[])
 
     if ( close(in_fd) == -1 || close(out_fd) == -1 )
         oops("Error closing files","");
+	return 0;
 }
 
 void oops(char *s1, char *s2)
@@ -83,8 +84,7 @@ bool is_same_file(char *src, char *dest)
     }
 
     if ( (f2=open(dest, O_RDONLY)) == -1 ) {
-        //oops("Cannot open ", dest);
-        fprintf(stderr,"Info: '%s' not existed\n", dest);
+        //fprintf(stderr,"Info: '%s' not existed\n", dest);
         if(stat(dest, &d_stat) < 0) {
             if (errno != ENOENT) {
                 oops("can't stat '%s'", dest);
@@ -102,11 +102,11 @@ bool is_same_file(char *src, char *dest)
     /*
      * Close two file after get status
      */
-    if(f1 != 0 & f1 != -1) {
+    if(f1 != 0 && f1 != -1) {
         if ( close(f1) == -1 )
             oops("Error closing files","");
     }
-    if(f2 !=0 & f2 != -1) {
+    if(f2 !=0 && f2 != -1) {
         if ( close(f2) == -1 )
             oops("Error closing files","");
     }
