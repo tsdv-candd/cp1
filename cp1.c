@@ -6,6 +6,7 @@
 #include 		<sys/types.h>
 #include 		<sys/stat.h>
 #include 		<errno.h>
+#include 		<string.h>
 
 #define BUFFERSIZE      4096
 #define COPYMODE        0644
@@ -13,34 +14,36 @@
 void oops(char *, char *);
 bool is_same_file(char *src, char *dest);
 void sync_file_permission(char *src, char *dest);
+char * dest_file_name(char * src, char* dest);
 
 int main(int ac, char *av[])
 {
     int     in_fd, out_fd, n_chars;
     char    buf[BUFFERSIZE];
-
+    char * 	dest_name = NULL;
     if ( ac != 3 ) {
         fprintf( stderr, "usage: %s source destination\n", *av);
         exit(1);
     }
 
+    dest_name = dest_file_name(av[1], av[2]);
     /*
      * Don't copy in case the destination is same as source file.
      */
-    if(is_same_file(av[1], av[2])) {
-        fprintf(stderr, "'%s' and '%s' are the same file\n", av[1], av[2]);
+    if(is_same_file(av[1], dest_name)) {
+        fprintf(stderr, "'%s' and '%s' are the same file\n", av[1], dest_name);
         exit(1);
     }
 
     if ( (in_fd=open(av[1], O_RDONLY)) == -1 )
         oops("Cannot open ", av[1]);
 
-    if ( (out_fd=creat( av[2], COPYMODE)) == -1 )
-        oops( "Cannot creat", av[2]);
+    if ( (out_fd=creat( dest_name, COPYMODE)) == -1 )
+        oops( "Cannot creat", dest_name);
 
     while ( (n_chars = read(in_fd , buf, BUFFERSIZE)) > 0 )
         if ( write( out_fd, buf, n_chars ) != n_chars )
-            oops("Write error to ", av[2]);
+            oops("Write error to ", dest_name);
     if ( n_chars == -1 )
         oops("Read error from ", av[1]);
 
@@ -48,7 +51,7 @@ int main(int ac, char *av[])
         oops("Error closing files","");
 
     //change file permission
-    sync_file_permission(av[1], av[2]);
+    sync_file_permission(av[1], dest_name);
 
     return 0;
 }
@@ -174,4 +177,42 @@ void sync_file_permission(char *src, char *dest)
         oops("can't preserve permissions of '%s'", dest);
 
     //return 0;
+}
+
+/*
+ * Create destination file name from src and dest input file
+ */
+char * dest_file_name(char * src, char* dest)
+{
+    char *tmp = NULL;
+    struct stat s_stat; /*source stat */
+    struct stat d_stat; /*destination stat */
+    /*
+     * Get destination file status.
+     */
+    if (stat(dest, &d_stat) < 0) {
+        if (errno != ENOENT) {
+            oops("can't stat '%s'", dest);
+        }
+    }
+    if(!S_ISDIR(d_stat.st_mode)) {
+        tmp = strdup(dest);
+        return tmp;
+    } else {
+        int newlen = 0;
+        if(dest[strlen(dest)] == '/') {
+            newlen = strlen(src) + strlen(dest) + 1;
+            tmp = (char *)malloc(newlen * sizeof(char));
+            strcpy(tmp, dest);
+            strcat(tmp, src);
+            return tmp;
+        } else {
+            newlen = strlen(src) + strlen(dest) + 2;
+            tmp = (char *)malloc(newlen * sizeof(char));
+            strcpy(tmp, dest);
+            strcat(tmp, "/");
+            strcat(tmp, src);
+            return tmp;
+        }
+    }
 }
