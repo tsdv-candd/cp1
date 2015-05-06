@@ -12,6 +12,7 @@
 
 void oops(char *, char *);
 bool is_same_file(char *src, char *dest);
+void sync_file_permission(char *src, char *dest);
 
 int main(int ac, char *av[])
 {
@@ -45,7 +46,11 @@ int main(int ac, char *av[])
 
     if ( close(in_fd) == -1 || close(out_fd) == -1 )
         oops("Error closing files","");
-	return 0;
+
+    //change file permission
+    sync_file_permission(av[1], av[2]);
+
+    return 0;
 }
 
 void oops(char *s1, char *s2)
@@ -123,4 +128,50 @@ bool is_same_file(char *src, char *dest)
      * Two files is not same
      */
     return false;
+}
+
+/*
+ * Copy file owner and permission.
+ * src pointer to the file path of the source file
+ * dest pointer to the file path of the destination file
+ * return Null
+ */
+void sync_file_permission(char *src, char *dest)
+{
+    struct stat s_stat; /*source stat */
+    struct stat d_stat; /*destination stat */
+
+    /*
+     * Get source file status.
+     */
+    if (stat(src, &s_stat) < 0) {
+        if (errno != ENOENT) {
+            oops("can't stat '%s'", src);
+        }
+    }
+
+    /*
+     * Get destination file status.
+     */
+    if (stat(dest, &d_stat) < 0) {
+        if (errno != ENOENT) {
+            oops("can't stat '%s'", dest);
+        }
+    }
+
+    /*
+     * Copy file's owner.
+     */
+    if (chown(dest, s_stat.st_uid, s_stat.st_gid) < 0) {
+        s_stat.st_mode &= ~(S_ISUID | S_ISGID);
+        oops("can't preserve ownership of '%s'", dest);
+    }
+
+    /*
+     * Copy file's permission.
+     */
+    if (chmod(dest, s_stat.st_mode) < 0)
+        oops("can't preserve permissions of '%s'", dest);
+
+    //return 0;
 }
