@@ -30,10 +30,16 @@ int main(int ac, char *av[])
         exit(1);
     }
 
+    /* Thirdly,
+     * Allow second argument to be a directory,
+     * Create the file with the same name of the source file
+     * under directory which input by user as second argument.
+     */
     dest_name = dest_file_name(av[1], av[2]);
 
-    /*
+    /* Firstly,
      * Don't copy in case the destination is same as source file.
+     * Just out put the message like real copy command.
      */
     result = is_same_file(av[1], dest_name);
     if(result == -1) {
@@ -47,8 +53,9 @@ int main(int ac, char *av[])
         exit(1);
     }
 
-    /*
-     * Don't copy in case the destination existed.
+    /* Fourthly,
+     * Abort copy in case the destination existed.
+     * notify user that "'destination file' already existed"
      */
     if(is_file_existed(dest_name)) {
         fprintf(stderr, "copy abort: '%s' already existed\n", dest_name);
@@ -82,7 +89,10 @@ int main(int ac, char *av[])
         oops("Error closing files","");
     }
 
-    //change file permission
+    /* Secondly,
+     * Assign the same file permission to the destination file as were
+     * on the source.
+     */
     if(sync_file_permission(av[1], dest_name) != 0) {
         fprintf(stderr, "Warring : can not copy file permission from '%s' to '%s'\n", av[1], dest_name);
         free_mem(dest_name);
@@ -286,6 +296,11 @@ char *dest_file_name(char * src, char* dest)
     return tmp;
 }
 
+/*
+ * is_file_existed: Check the file to make sure it existed or not.
+ * filename : filename or filepath of the file to be checked.
+ * return: return true if the file existed and false if not existed.
+ */
 bool is_file_existed(char *filename)
 {
     //Try to access the file
