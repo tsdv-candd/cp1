@@ -84,10 +84,10 @@ int main(int ac, char *av[])
 
     //change file permission
     if(sync_file_permission(av[1], dest_name) != 0) {
-		fprintf(stderr, "Warring : can not copy file permission from '%s' to '%s'\n", av[1], dest_name);
-		free_mem(dest_name);
-		exit(1);
-	}
+        fprintf(stderr, "Warring : can not copy file permission from '%s' to '%s'\n", av[1], dest_name);
+        free_mem(dest_name);
+        exit(1);
+    }
 
     free_mem(dest_name);
     return 0;
@@ -100,12 +100,18 @@ void oops(char *s1, char *s2)
     exit(1);
 }
 
+/*
+ * free_mem: free allocated memory.
+ * ptr :  pointer to allocated memory need to be free.
+ * return: None
+ */
 void free_mem(void *ptr) {
     if(ptr) {
         free(ptr);
         ptr = NULL;
     }
 }
+
 /*
  * Compare two file to make sure it same file or not.
  * src : file name or full path of source file.
@@ -120,7 +126,7 @@ int is_same_file(char *src, char *dest)
     int f2 = 0;
 
     /*
-     * Open src and dest in read only mode to get file status
+     * Open source file in read only mode to get file status
      */
     if ( (f1=open(src, O_RDONLY)) == -1 ) {
         fprintf(stderr,"Error: %s ", src);
@@ -138,6 +144,9 @@ int is_same_file(char *src, char *dest)
         }
     }
 
+    /*
+     * Open destination file in read only mode to get file status
+     */
     if ( (f2=open(dest, O_RDONLY)) == -1 ) {
         if(stat(dest, &d_stat) < 0) {
             if (errno != ENOENT) {
@@ -175,7 +184,7 @@ int is_same_file(char *src, char *dest)
      * the same device and have the same i-node number.
      */
     if (s_stat.st_dev == d_stat.st_dev
-        && s_stat.st_ino == d_stat.st_ino) {
+            && s_stat.st_ino == d_stat.st_ino) {
         return SAME;
     }
 
@@ -193,17 +202,16 @@ int is_same_file(char *src, char *dest)
  */
 int sync_file_permission(char *src, char *dest)
 {
-    struct stat s_stat; /*source stat */
-    struct stat d_stat; /*destination stat */
+    struct stat s_stat; /* source stat */
+    struct stat d_stat; /* destination stat */
 
     /*
      * Get source file status.
      */
     if (stat(src, &s_stat) < 0) {
         if (errno != ENOENT) {
-			perror("Error: ");
-			return (-1);
-            //oops("can't stat '%s'", src);
+            perror("Error: ");
+            return (-1);
         }
     }
 
@@ -212,9 +220,8 @@ int sync_file_permission(char *src, char *dest)
      */
     if (stat(dest, &d_stat) < 0) {
         if (errno != ENOENT) {
-			perror("Error: ");
-			return (-1);
-            //oops("can't stat '%s'", dest);
+            perror("Error: ");
+            return (-1);
         }
     }
 
@@ -223,19 +230,17 @@ int sync_file_permission(char *src, char *dest)
      */
     if (chown(dest, s_stat.st_uid, s_stat.st_gid) < 0) {
         s_stat.st_mode &= ~(S_ISUID | S_ISGID);
-		perror("Error: ");
-		return (-1);
-        //oops("can't preserve ownership of '%s'", dest);
+        perror("Error: ");
+        return (-1);
     }
 
     /*
      * Copy file's permission.
      */
     if (chmod(dest, s_stat.st_mode) < 0) {
-		perror("Error: ");
-		return (-1);
-        //oops("can't preserve permissions of '%s'", dest);
-	}
+        perror("Error: ");
+        return (-1);
+    }
 
     return 0;
 }
@@ -246,8 +251,8 @@ int sync_file_permission(char *src, char *dest)
 char *dest_file_name(char * src, char* dest)
 {
     char *tmp = NULL;
-    //struct stat s_stat; /*source stat */
-    struct stat d_stat; /*destination stat */
+    struct stat d_stat; /* destination stat */
+
     /*
      * Get destination file status.
      */
@@ -256,6 +261,11 @@ char *dest_file_name(char * src, char* dest)
             oops("can't stat '%s'", dest);
         }
     }
+    /*
+     * In case the destination file is directory,
+     * Create destination file with the same name of the source file.
+     * under that directory.
+     */
     if(!S_ISDIR(d_stat.st_mode)) {
         tmp = strdup(dest);
     } else {
