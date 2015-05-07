@@ -85,6 +85,8 @@ int main(int ac, char *av[])
     //change file permission
     if(sync_file_permission(av[1], dest_name) != 0) {
 		fprintf(stderr, "Warring : can not copy file permission from '%s' to '%s'\n", av[1], dest_name);
+		free_mem(dest_name);
+		exit(1);
 	}
 
     free_mem(dest_name);
