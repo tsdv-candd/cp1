@@ -112,7 +112,7 @@ void oops(char *s1, char *s2)
 
 /*
  * free_mem: free allocated memory.
- * ptr :  pointer to allocated memory need to be free.
+ * ptr:  pointer to allocated memory need to be free.
  * return: None
  */
 void free_mem(void *ptr) {
@@ -271,21 +271,36 @@ char *dest_file_name(char * src, char* dest)
             oops("can't stat '%s'", dest);
         }
     }
+
+    /*
+     * In case the destination is not directory
+     * simply create the destination file name as user's input.
+     */
+    if(!S_ISDIR(d_stat.st_mode)) {
+        tmp = strdup(dest);
+    }
     /*
      * In case the destination file is directory,
      * Create destination file with the same name of the source file.
      * under that directory.
      */
-    if(!S_ISDIR(d_stat.st_mode)) {
-        tmp = strdup(dest);
-    } else {
+    else {
         int newlen = 0;
+        /*
+         * In case user input destination directory
+         * Include the '/' character.
+         * Just simply create the dessication file path
+         * by adding source file name.
+         */
         if(dest[strlen(dest)] == '/') {
             newlen = strlen(src) + strlen(dest) + 1;
             tmp = (char *)malloc(newlen * sizeof(char));
             strcpy(tmp, dest);
             strcat(tmp, src);
         } else {
+            /* In case user don't type the '/' character at the end of directory.
+             * Add the '/' character before adding source file name
+             */
             newlen = strlen(src) + strlen(dest) + 2;
             tmp = (char *)malloc(newlen * sizeof(char));
             strcpy(tmp, dest);
